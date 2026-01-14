@@ -41,7 +41,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, loading }) 
 // Toast Notification
 const Toast = ({ message, type, onClose }) => {
     useEffect(() => {
-        const timer = setTimeout(onClose, 4000);
+        const timer = setTimeout(onClose, 1500);
         return () => clearTimeout(timer);
     }, [onClose]);
 
@@ -81,6 +81,14 @@ function Contacts() {
     const [toast, setToast] = useState(null);
 
     useEffect(() => { loadContacts(); }, []);
+
+    // Auto-refresh every 3 seconds to show sync status updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            loadContacts();
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     const loadContacts = async () => {
         setLoading(true);
@@ -197,14 +205,11 @@ function Contacts() {
                                 <td>{c.company || <span style={{ opacity: 0.3 }}>—</span>}</td>
                                 <td>
                                     <span className={`badge ${c.syncStatus?.toLowerCase() === 'synced' ? 'synced' : 'pending'}`}>
-                                        {c.syncStatus || "NEW"}
+                                        {c.syncStatus || "SYNCED"}
                                     </span>
                                 </td>
                                 <td style={{ textAlign: "right" }}>
                                     <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                                        <button className="btn btn-secondary btn-sm" title="Sync" onClick={() => api.sync.syncContact(c._id).then(loadContacts).catch(e => setToast({ message: e.message, type: "error" }))}>
-                                            <RefreshCw size={14} />
-                                        </button>
                                         <button className="btn btn-secondary btn-sm" title="Edit" onClick={() => handleEdit(c)}>
                                             <Edit2 size={14} />
                                         </button>
@@ -226,54 +231,56 @@ function Contacts() {
                 </table>
             </div>
 
-            {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="modal"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="modal-header">
-                            <h3>{isEditing ? "Edit Contact" : "Create Contact"}</h3>
-                            <button className="btn-secondary" style={{ border: "none" }} onClick={() => setShowModal(false)}>
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="modal-body" style={{ display: "grid", gap: "16px" }}>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                                    <div>
-                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>FIRST NAME</label>
-                                        <input required value={formData.firstname} onChange={e => setFormData({ ...formData, firstname: e.target.value })} />
+            {
+                showModal && (
+                    <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="modal"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <h3>{isEditing ? "Edit Contact" : "Create Contact"}</h3>
+                                <button className="btn-secondary" style={{ border: "none" }} onClick={() => setShowModal(false)}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="modal-body" style={{ display: "grid", gap: "16px" }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                                        <div>
+                                            <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>FIRST NAME</label>
+                                            <input required value={formData.firstname} onChange={e => setFormData({ ...formData, firstname: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>LAST NAME</label>
+                                            <input required value={formData.lastname} onChange={e => setFormData({ ...formData, lastname: e.target.value })} />
+                                        </div>
                                     </div>
                                     <div>
-                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>LAST NAME</label>
-                                        <input required value={formData.lastname} onChange={e => setFormData({ ...formData, lastname: e.target.value })} />
+                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>EMAIL ADDRESS</label>
+                                        <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>PHONE</label>
+                                        <input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>COMPANY</label>
+                                        <input value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} />
                                     </div>
                                 </div>
-                                <div>
-                                    <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>EMAIL ADDRESS</label>
-                                    <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" style={{ marginRight: "12px" }} onClick={() => setShowModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">{isEditing ? "Update Contact" : "Create Contact"}</button>
                                 </div>
-                                <div>
-                                    <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>PHONE</label>
-                                    <input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>COMPANY</label>
-                                    <input value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" style={{ marginRight: "12px" }} onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">{isEditing ? "Update Contact" : "Create Contact"}</button>
-                            </div>
-                        </form>
-                    </motion.div>
-                </div>
-            )}
-        </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 

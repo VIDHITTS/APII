@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../services/api";
-import { Globe, Plus, RefreshCw, Trash2, Edit2, X, Building2, AlertTriangle, Loader } from "lucide-react";
+import { Globe, Plus, Trash2, Edit2, X, AlertTriangle, Loader } from "lucide-react";
 import PageInfo from "../components/PageInfo";
+import { HUBSPOT_INDUSTRIES } from "../constants/hubspot";
 
 // Custom Confirmation Modal
 const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, loading }) => {
@@ -41,7 +42,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, loading }) 
 // Toast Notification
 const Toast = ({ message, type, onClose }) => {
     useEffect(() => {
-        const timer = setTimeout(onClose, 4000);
+        const timer = setTimeout(onClose, 1500);
         return () => clearTimeout(timer);
     }, [onClose]);
 
@@ -81,6 +82,14 @@ function Companies() {
     const [toast, setToast] = useState(null);
 
     useEffect(() => { load(); }, []);
+
+    // Auto-refresh every 3 seconds to show sync status updates
+    useEffect(() => {
+        const interval = setInterval(() => {
+            load();
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     const load = async () => {
         setLoading(true);
@@ -196,14 +205,11 @@ function Companies() {
                                 <td>{c.industry || <span style={{ opacity: 0.3 }}>—</span>}</td>
                                 <td>
                                     <span className={`badge ${c.syncStatus?.toLowerCase() === 'synced' ? 'synced' : 'pending'}`}>
-                                        {c.syncStatus || "NEW"}
+                                        {c.syncStatus || "SYNCED"}
                                     </span>
                                 </td>
                                 <td style={{ textAlign: "right" }}>
                                     <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                                        <button className="btn btn-secondary btn-sm" title="Sync" onClick={() => api.sync.syncCompany(c._id).then(load).catch(e => setToast({ message: e.message, type: "error" }))}>
-                                            <RefreshCw size={14} />
-                                        </button>
                                         <button className="btn btn-secondary btn-sm" title="Edit" onClick={() => handleEdit(c)}>
                                             <Edit2 size={14} />
                                         </button>
@@ -225,54 +231,60 @@ function Companies() {
                 </table>
             </div>
 
-            {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="modal"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="modal-header">
-                            <h3>{isEditing ? "Edit Company" : "Create Company"}</h3>
-                            <button className="btn-secondary" style={{ border: "none" }} onClick={() => setShowModal(false)}>
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="modal-body" style={{ display: "grid", gap: "16px" }}>
-                                <div>
-                                    <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>COMPANY NAME</label>
-                                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                                </div>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            {
+                showModal && (
+                    <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="modal"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <h3>{isEditing ? "Edit Company" : "Create Company"}</h3>
+                                <button className="btn-secondary" style={{ border: "none" }} onClick={() => setShowModal(false)}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="modal-body" style={{ display: "grid", gap: "16px" }}>
                                     <div>
-                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>DOMAIN</label>
-                                        <input required value={formData.domain} onChange={e => setFormData({ ...formData, domain: e.target.value })} />
+                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>COMPANY NAME</label>
+                                        <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                                        <div>
+                                            <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>DOMAIN</label>
+                                            <input required value={formData.domain} onChange={e => setFormData({ ...formData, domain: e.target.value })} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>INDUSTRY</label>
+                                            <select value={formData.industry} onChange={e => setFormData({ ...formData, industry: e.target.value })}>
+                                                {HUBSPOT_INDUSTRIES.map(ind => (
+                                                    <option key={ind.value} value={ind.value}>{ind.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>INDUSTRY</label>
-                                        <input value={formData.industry} onChange={e => setFormData({ ...formData, industry: e.target.value })} />
+                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>PHONE</label>
+                                        <input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>ADDRESS</label>
+                                        <input value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                                     </div>
                                 </div>
-                                <div>
-                                    <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>PHONE</label>
-                                    <input value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" style={{ marginRight: "12px" }} onClick={() => setShowModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">{isEditing ? "Update Company" : "Create Company"}</button>
                                 </div>
-                                <div>
-                                    <label style={{ fontSize: "12px", fontWeight: "700", color: "var(--text-secondary)", marginBottom: "8px", display: "block" }}>ADDRESS</label>
-                                    <input value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" style={{ marginRight: "12px" }} onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-primary">{isEditing ? "Update Company" : "Create Company"}</button>
-                            </div>
-                        </form>
-                    </motion.div>
-                </div>
-            )}
-        </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 

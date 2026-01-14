@@ -8,7 +8,7 @@ import ConflictVisualizer from "../components/ConflictVisualizer";
 // Mini Toast Component
 const Toast = ({ message, type, onClose }) => {
     useEffect(() => {
-        const timer = setTimeout(onClose, 3000);
+        const timer = setTimeout(() => onClose(), 1500);
         return () => clearTimeout(timer);
     }, [onClose]);
 

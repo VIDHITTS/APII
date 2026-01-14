@@ -109,7 +109,7 @@ function Dashboard({ onChangePage }) {
                     <h3 style={{ fontSize: "16px", marginBottom: "8px" }}>Next Sync</h3>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)", fontSize: "14px" }}>
                         <div className="spinner" style={{ width: "12px", height: "12px", border: "2px solid var(--text-secondary)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
-                        Auto-scheduled
+                        Auto-scheduled (~ {new Date(Date.now() + 5 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                     </div>
                 </div>
             </div>

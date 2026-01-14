@@ -67,13 +67,35 @@ function Logs() {
                                 <td style={{ textTransform: "capitalize" }}>{log.entityType}</td>
                                 <td>{log.action}</td>
                                 <td>
-                                    {log.status === "SUCCESS" ? (
-                                        <span style={{ color: "var(--color-success)" }}>● Success</span>
-                                    ) : log.status === "FAILED" ? (
-                                        <span style={{ color: "var(--color-error)" }}>● Failed</span>
-                                    ) : (
-                                        <span>{log.status}</span>
-                                    )}
+                                    {(() => {
+                                        const statusColors = {
+                                            SUCCESS: "var(--accent)",
+                                            FAILED: "var(--danger)",
+                                            PENDING: "var(--warning)"
+                                        };
+                                        const color = statusColors[log.status] || "var(--text-secondary)";
+                                        return (
+                                            <span style={{
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                                fontWeight: "500",
+                                                color: "var(--text-main)", // Neutral text color
+                                                fontSize: "13px"
+                                            }}>
+                                                <span style={{
+                                                    width: "8px",
+                                                    height: "8px",
+                                                    borderRadius: "50%",
+                                                    backgroundColor: color,
+                                                    boxShadow: `0 0 8px ${color}` // Add a subtle glow to the dot
+                                                }}></span>
+                                                {log.status === "SUCCESS" ? "Success" :
+                                                    log.status === "FAILED" ? "Failed" :
+                                                        log.status === "PENDING" ? "Pending" : log.status}
+                                            </span>
+                                        );
+                                    })()}
                                 </td>
                                 <td style={{ fontFamily: "monospace", color: "var(--color-text-muted)" }}>
                                     {log.duration}ms

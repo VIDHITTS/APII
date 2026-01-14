@@ -11,6 +11,7 @@ const conflictRouter = require("./conflictService/router");
 const logRouter = require("./logService/router");
 const queueRouter = require("./queueService/router");
 const { createWorker } = require("./queueService/worker");
+const { schedulePullAll, schedulePushPending } = require("./queueService/queue");
 const { apiLimiter, webhookLimiter } = require("./middleware/rateLimiter");
 
 const app = express();
@@ -50,6 +51,11 @@ const PORT = process.env.PORT || 3000;
 connectDB().then(() => {
   createWorker();
   console.log("BullMQ worker started");
+
+  // Start periodic sync jobs
+  schedulePullAll();
+  schedulePushPending();
+  console.log("Periodic sync jobs scheduled");
 
   app.listen(PORT, () => {
     console.log("Server running on port " + PORT);

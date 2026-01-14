@@ -1,4 +1,5 @@
 const service = require("./service");
+const { addSyncJob } = require("../queueService/queue");
 
 const getAll = async (req, res) => {
   try {
@@ -24,6 +25,13 @@ const getById = async (req, res) => {
 const create = async (req, res) => {
   try {
     const company = await service.create(req.body);
+
+    // Auto-sync to HubSpot (Assignment Requirement: line 80-81)
+    await addSyncJob("company-sync", {
+      companyId: company._id.toString(),
+      direction: "outbound"
+    });
+
     res.status(201).json(company);
   } catch (error) {
     if (error.code === 11000) {
@@ -39,6 +47,15 @@ const update = async (req, res) => {
     if (!company) {
       return res.status(404).json({ error: "Company not found" });
     }
+
+    // Auto-sync to HubSpot (Assignment Requirement: line 81)
+    if (company.hubspotId) {
+      await addSyncJob("company-sync", {
+        companyId: company._id.toString(),
+        direction: "outbound"
+      });
+    }
+
     res.json(company);
   } catch (error) {
     res.status(400).json({ error: error.message });
