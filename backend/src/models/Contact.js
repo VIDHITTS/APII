@@ -58,7 +58,5 @@ const ContactSchema = new mongoose.Schema(
 );
 
 ContactSchema.index({ syncStatus: 1 });
-ContactSchema.index({ hubspotId: 1 });
-ContactSchema.index({ email: 1 });
 
 module.exports = mongoose.model("Contact", ContactSchema);

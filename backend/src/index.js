@@ -3,6 +3,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
+const contactRouter = require("./contactService/router");
+
 const app = express();
 
 app.use(cors());
@@ -15,6 +17,8 @@ app.get("/health", (req, res) => {
     mongodb: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   });
 });
+
+app.use("/api/contacts", contactRouter);
 
 const connectDB = async () => {
   try {
