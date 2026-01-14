@@ -16,7 +16,11 @@ const { apiLimiter, webhookLimiter } = require("./middleware/rateLimiter");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  credentials: true
+}));
 app.use(express.json());
 
 app.get("/health", (req, res) => {
