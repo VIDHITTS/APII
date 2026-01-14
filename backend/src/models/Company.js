@@ -6,6 +6,7 @@ const CompanySchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      default: "Unnamed Company",
     },
     domain: {
       type: String,

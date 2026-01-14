@@ -198,7 +198,7 @@ const syncCompanyFromHubSpot = async (hubspotData) => {
   const props = hubspotData.properties;
 
   const incomingData = {
-    name: props.name,
+    name: props.name || props.domain || "Unnamed Company",
     domain: props.domain || "",
     industry: props.industry || "",
     phone: props.phone || "",

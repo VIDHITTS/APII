@@ -9,6 +9,8 @@ const syncRouter = require("./syncService/router");
 const webhookRouter = require("./webhookService/router");
 const conflictRouter = require("./conflictService/router");
 const logRouter = require("./logService/router");
+const queueRouter = require("./queueService/router");
+const { createWorker } = require("./queueService/worker");
 
 const app = express();
 
@@ -30,6 +32,7 @@ app.use("/api/sync", syncRouter);
 app.use("/api/webhooks", webhookRouter);
 app.use("/api/conflicts", conflictRouter);
 app.use("/api/logs", logRouter);
+app.use("/api/queue", queueRouter);
 
 const connectDB = async () => {
   try {
@@ -44,6 +47,9 @@ const connectDB = async () => {
 const PORT = process.env.PORT || 3000;
 
 connectDB().then(() => {
+  createWorker();
+  console.log("BullMQ worker started");
+  
   app.listen(PORT, () => {
     console.log("Server running on port " + PORT);
   });
