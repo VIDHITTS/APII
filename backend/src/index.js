@@ -8,6 +8,7 @@ const companyRouter = require("./companyService/router");
 const syncRouter = require("./syncService/router");
 const webhookRouter = require("./webhookService/router");
 const conflictRouter = require("./conflictService/router");
+const logRouter = require("./logService/router");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/companies", companyRouter);
 app.use("/api/sync", syncRouter);
 app.use("/api/webhooks", webhookRouter);
 app.use("/api/conflicts", conflictRouter);
+app.use("/api/logs", logRouter);
 
 const connectDB = async () => {
   try {

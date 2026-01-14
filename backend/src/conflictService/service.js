@@ -1,6 +1,7 @@
 const Conflict = require("../models/Conflict");
 const Contact = require("../models/Contact");
 const Company = require("../models/Company");
+const SyncLog = require("../models/SyncLog");
 const hubspotContacts = require("../hubspotService/contacts");
 const hubspotCompanies = require("../hubspotService/companies");
 
@@ -136,6 +137,17 @@ const resolve = async (conflictId, resolutionStrategy, finalData, pushToHubSpot 
   conflict.resolvedAt = new Date();
   conflict.resolvedData = finalData;
   await conflict.save();
+
+  await SyncLog.create({
+    entityType: conflict.entityType,
+    entityId: conflict.localId,
+    hubspotId: conflict.hubspotId,
+    action: "SYNC",
+    direction: pushToHubSpot ? "OUTBOUND" : "INBOUND",
+    status: "SUCCESS",
+    dataBefore: { local: conflict.localSnapshot, remote: conflict.remoteSnapshot },
+    dataAfter: { resolution: resolutionStrategy, finalData },
+  });
 
   return conflict;
 };
