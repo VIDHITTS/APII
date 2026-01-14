@@ -2,3 +2,4 @@ code/
 
 backend/node_modules
 backend/package-lock.json
+.DS_Store
