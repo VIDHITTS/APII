@@ -1,5 +1,3 @@
-// Company service middleware
-
 const validateCompanyData = (req, res, next) => {
   const { name } = req.body;
   if (req.method === "POST" && !name) {

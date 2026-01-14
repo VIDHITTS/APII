@@ -6,8 +6,6 @@ const hubspotContacts = require("../hubspotService/contacts");
 const hubspotCompanies = require("../hubspotService/companies");
 const { createHash, hasChanged } = require("./hash");
 
-// === CONTACT SYNC ===
-
 const syncContactToHubSpot = async (contactId) => {
   const contact = await Contact.findById(contactId);
   if (!contact) throw new Error("Contact not found");
@@ -25,21 +23,17 @@ const syncContactToHubSpot = async (contactId) => {
 
   try {
     if (contact.hubspotId) {
-      // Update existing in HubSpot
       hubspotResult = await hubspotContacts.update(contact.hubspotId, syncData);
     } else {
-      // Create new in HubSpot
       hubspotResult = await hubspotContacts.create(syncData);
       contact.hubspotId = hubspotResult.id;
     }
 
-    // Update sync metadata - PREVENTS ECHO LOOP
     contact.lastSyncedHash = createHash(syncData);
     contact.syncStatus = "SYNCED";
     contact.lastModifiedHubSpot = new Date();
     await contact.save();
 
-    // Log success
     await SyncLog.create({
       entityType: "contact",
       entityId: contact._id,
@@ -85,12 +79,10 @@ const syncContactFromHubSpot = async (hubspotData) => {
   let contact = await Contact.findOne({ hubspotId });
 
   if (!contact) {
-    // Check by email
     contact = await Contact.findOne({ email: props.email });
   }
 
   if (!contact) {
-    // New contact from HubSpot
     contact = new Contact({
       ...incomingData,
       hubspotId,
@@ -102,12 +94,10 @@ const syncContactFromHubSpot = async (hubspotData) => {
     return { action: "CREATED", contact };
   }
 
-  // CHECK FOR ECHO - if hash matches, ignore (prevents infinite loop)
   if (!hasChanged(incomingData, contact.lastSyncedHash)) {
-    return { action: "SKIPPED", reason: "No real change (echo)", contact };
+    return { action: "SKIPPED", reason: "No real change", contact };
   }
 
-  // Check for conflict - both sides modified
   if (contact.syncStatus === "PENDING") {
     const conflict = await Conflict.create({
       entityType: "contact",
@@ -132,7 +122,6 @@ const syncContactFromHubSpot = async (hubspotData) => {
     return { action: "CONFLICT", conflict, contact };
   }
 
-  // Apply HubSpot changes
   Object.assign(contact, incomingData);
   contact.hubspotId = hubspotId;
   contact.lastSyncedHash = createHash(incomingData);
@@ -142,8 +131,6 @@ const syncContactFromHubSpot = async (hubspotData) => {
 
   return { action: "UPDATED", contact };
 };
-
-// === COMPANY SYNC ===
 
 const syncCompanyToHubSpot = async (companyId) => {
   const company = await Company.findById(companyId);
@@ -162,7 +149,10 @@ const syncCompanyToHubSpot = async (companyId) => {
 
   try {
     if (company.hubspotId) {
-      hubspotResult = await hubspotCompanies.update(company.hubspotId, syncData);
+      hubspotResult = await hubspotCompanies.update(
+        company.hubspotId,
+        syncData
+      );
     } else {
       hubspotResult = await hubspotCompanies.create(syncData);
       company.hubspotId = hubspotResult.id;
@@ -286,7 +276,11 @@ const syncAllPendingToHubSpot = async () => {
       await syncContactToHubSpot(contact._id);
       results.contacts.push({ id: contact._id, status: "success" });
     } catch (error) {
-      results.contacts.push({ id: contact._id, status: "failed", error: error.message });
+      results.contacts.push({
+        id: contact._id,
+        status: "failed",
+        error: error.message,
+      });
     }
   }
 
@@ -295,7 +289,11 @@ const syncAllPendingToHubSpot = async () => {
       await syncCompanyToHubSpot(company._id);
       results.companies.push({ id: company._id, status: "success" });
     } catch (error) {
-      results.companies.push({ id: company._id, status: "failed", error: error.message });
+      results.companies.push({
+        id: company._id,
+        status: "failed",
+        error: error.message,
+      });
     }
   }
 

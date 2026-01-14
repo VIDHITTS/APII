@@ -7,46 +7,42 @@ const ConflictSchema = new mongoose.Schema(
       enum: ["contact", "company"],
       required: true,
     },
-    entityId: {
+    localId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "entityType",
     },
     hubspotId: {
       type: String,
       required: true,
     },
-    localData: {
+    localSnapshot: {
       type: mongoose.Schema.Types.Mixed,
       required: true,
     },
-    hubspotData: {
+    remoteSnapshot: {
       type: mongoose.Schema.Types.Mixed,
-      required: true,
-    },
-    localModifiedAt: {
-      type: Date,
-      required: true,
-    },
-    hubspotModifiedAt: {
-      type: Date,
       required: true,
     },
     status: {
       type: String,
-      enum: ["PENDING", "RESOLVED_LOCAL", "RESOLVED_HUBSPOT", "RESOLVED_MANUAL", "DISMISSED"],
-      default: "PENDING",
+      enum: ["OPEN", "RESOLVED"],
+      default: "OPEN",
     },
-    resolvedBy: {
+    resolutionStrategy: {
       type: String,
+      enum: ["KEEP_LOCAL", "KEEP_REMOTE", "MANUAL_MERGE", null],
       default: null,
+    },
+    resolvedData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    detectedAt: {
+      type: Date,
+      default: Date.now,
     },
     resolvedAt: {
       type: Date,
-      default: null,
-    },
-    resolution: {
-      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
   },
@@ -56,7 +52,7 @@ const ConflictSchema = new mongoose.Schema(
 );
 
 ConflictSchema.index({ status: 1 });
-ConflictSchema.index({ entityType: 1, entityId: 1 });
-ConflictSchema.index({ createdAt: -1 });
+ConflictSchema.index({ entityType: 1, localId: 1 });
+ConflictSchema.index({ detectedAt: -1 });
 
 module.exports = mongoose.model("Conflict", ConflictSchema);

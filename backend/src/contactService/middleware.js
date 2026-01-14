@@ -1,5 +1,3 @@
-// Contact service middleware
-
 const validateContactData = (req, res, next) => {
   const { email } = req.body;
   if (req.method === "POST" && !email) {
