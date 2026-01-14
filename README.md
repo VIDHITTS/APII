@@ -70,6 +70,70 @@ npm run dev
 
 The application will be available at `http://localhost:5173`.
 
+## System Architecture
+
+```mermaid
+graph TD
+    subgraph Client ["Frontend (React + Vite)"]
+        UI[User Interface]
+        Dash[Dashboard & Stats]
+        Forms[Contact/Company Forms]
+    end
+
+    subgraph Server ["Backend (Node.js + Express)"]
+        API[API Gateway]
+        Auth[Middleware & Rate Limiting]
+        SyncMgr[Sync Manager]
+        ConflictMgr[Conflict Manager]
+    end
+
+    subgraph Async ["Async Processing"]
+        Queue[BullMQ Job Queue]
+        Worker[Sync Worker]
+        Redis[(Redis / Upstash)]
+    end
+
+    subgraph Storage ["Data Persistence"]
+        DB[(MongoDB)]
+        Coll_Contacts[Contacts]
+        Coll_Companies[Companies]
+        Coll_Logs[Sync Logs]
+    end
+
+    subgraph External ["External Services"]
+        HubSpot[HubSpot CRM]
+        Webhooks[HubSpot Webhooks]
+    end
+
+    %% Flows
+    UI -->|HTTP Requests| API
+    API --> Auth --> SyncMgr
+
+    %% Direct DB Operations
+    SyncMgr -->|Read/Write| DB
+    ConflictMgr -->|Resolve| DB
+
+    %% Async Logic
+    SyncMgr -->|Add Job| Queue
+    Queue -->|Persist| Redis
+    Redis -->|Process| Worker
+    Worker -->|Sync Data| HubSpot
+    Worker -->|Update Status| DB
+
+    %% Inbound Flows
+    Webhooks -->|Notify| API
+    Worker -->|Pull Updates| HubSpot
+
+    %% Styling
+    classDef primary fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef database fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef external fill:#ddf,stroke:#333,stroke-width:2px;
+    
+    class UI,API,Worker primary;
+    class DB,Redis database;
+    class HubSpot external;
+```
+
 ## Architecture Decisions & Trade-offs
 
 ### Conflict Resolution Strategy
