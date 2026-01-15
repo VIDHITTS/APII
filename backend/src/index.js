@@ -1,44 +1,10 @@
 require("dotenv").config();
-const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
-
-const contactRouter = require("./contactService/router");
-const companyRouter = require("./companyService/router");
-const syncRouter = require("./syncService/router");
-const webhookRouter = require("./webhookService/router");
-const conflictRouter = require("./conflictService/router");
-const logRouter = require("./logService/router");
-const queueRouter = require("./queueService/router");
+const { createApp } = require("./app");
 const { createWorker } = require("./queueService/worker");
 const { schedulePullAll, schedulePushPending } = require("./queueService/queue");
-const { apiLimiter, webhookLimiter } = require("./middleware/rateLimiter");
 
-const app = express();
-
-app.use(cors({
-  origin: "*", // Allow all origins for debugging
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  credentials: true
-}));
-app.use(express.json());
-
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    mongodb:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  });
-});
-
-app.use("/api/contacts", apiLimiter, contactRouter);
-app.use("/api/companies", apiLimiter, companyRouter);
-app.use("/api/sync", apiLimiter, syncRouter);
-app.use("/api/webhooks", webhookLimiter, webhookRouter);
-app.use("/api/conflicts", apiLimiter, conflictRouter);
-app.use("/api/logs", apiLimiter, logRouter);
-app.use("/api/queue", apiLimiter, queueRouter);
+const app = createApp();
 
 const connectDB = async () => {
   try {
@@ -56,7 +22,6 @@ connectDB().then(() => {
   createWorker();
   console.log("BullMQ worker started");
 
-  // Start periodic sync jobs
   schedulePullAll();
   schedulePushPending();
   console.log("Periodic sync jobs scheduled");

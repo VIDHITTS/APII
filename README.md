@@ -191,3 +191,32 @@ Reliability is achieved through a multi-layered approach:
 | `POST` | `/api/sync/push-all` | Trigger manual push to HubSpot |
 | `GET` | `/api/conflicts` | List active conflicts |
 | `POST` | `/api/conflicts/:id/resolve` | Resolve a conflict |
+
+## Testing
+
+The project includes a comprehensive test suite using Jest and Supertest.
+
+### Running Tests
+
+```bash
+cd backend
+npm test
+```
+
+### Test Coverage
+
+| Test Suite | Tests | Description |
+| :--- | :---: | :--- |
+| `contactApi.test.js` | 4 | API endpoint integration tests |
+| `conflictService.test.js` | 5 | Unit tests for conflict detection & resolution |
+| `syncOperations.test.js` | 4 | Integration tests for sync workflows |
+
+**Total: 13 tests**
+
+### Key Test Scenarios
+
+-   **CRUD Operations**: Full lifecycle testing for contacts and companies
+-   **Conflict Detection**: Verifies conflicts are created when local changes are pending
+-   **Field-level Merging**: Tests custom merge resolution strategy
+-   **Sync Status Transitions**: Validates NEW → PENDING → SYNCED state machine
+
