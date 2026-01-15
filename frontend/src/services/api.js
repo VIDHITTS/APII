@@ -77,7 +77,7 @@ export const api = {
     },
 
     logs: {
-        getAll: () => fetch(`${API_URL}/logs`).then(handleResponse),
+        getAll: (limit = 100) => fetch(`${API_URL}/logs?limit=${limit}`).then(handleResponse),
         getStats: () => fetch(`${API_URL}/logs/stats`).then(handleResponse),
     },
 
